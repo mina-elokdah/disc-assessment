@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>أساليب السلوك في العمل | Scaling Up</title>
+<style>
+:root{--ink:#104862;--bg:#f4f7f9;--line:#d8dee3;--muted:#49626f;--orange:#f6a822;--blue:#177cbd;--brown:#946b35;--green:#94c120}
+*{box-sizing:border-box} [hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.7 Cairo,Tahoma,Arial,sans-serif}
+.stripe{height:6px;background:linear-gradient(to right,var(--orange) 25%,var(--blue) 25% 50%,var(--brown) 50% 75%,var(--green) 75%)}
+header,main{width:min(880px,calc(100% - 32px));margin:auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:18px 0;border-bottom:1px solid var(--line);font-size:.85rem}
+.brand{font-size:1.25rem;font-weight:800;letter-spacing:-.03em} main{margin-block:32px 64px}
+section{background:#fff;border:1px solid var(--line);padding:clamp(18px,4vw,44px);border-radius:20px}
+h1,h2,h3,p{margin:0 0 .7em} h1{font-size:clamp(1.65rem,5vw,2.65rem);line-height:1.35} h2{font-size:1.25rem} h3{font-size:1rem}
+.muted,small{color:var(--muted)} .actions,.choices,.steps{display:flex;gap:10px;flex-wrap:wrap}
+.actions{margin-top:20px} button{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 14px;cursor:pointer}
+button:focus-visible{outline:3px solid var(--blue);outline-offset:3px} button.primary,button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)} button:disabled{opacity:.52;cursor:default}
+.option{padding:12px 0;border-bottom:1px solid var(--line)} .option p{margin-bottom:6px} .choices button{font-size:.85rem}
+.progress{width:100%;height:8px;accent-color:var(--blue);margin-bottom:18px}
+.steps{font-size:.83rem;margin-block:12px;color:var(--muted)}
+.summary{padding:16px;border-inline-start:4px solid var(--blue);background:var(--bg);margin-bottom:18px}
+table{width:100%;border-collapse:collapse;font-size:.9rem;margin-bottom:16px} th,td{text-align:start;padding:8px 5px;border-bottom:1px solid var(--line)} td:not(:first-child),th:not(:first-child){text-align:center}
+.profiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:17px 0}.profile{padding:14px;border:1px solid var(--line);border-radius:12px}.profile p{font-size:.89rem;margin-bottom:.5em}.profile p:last-child{margin-bottom:0}
+@media(max-width:540px){.profiles{grid-template-columns:1fr} table{font-size:.79rem} .choices{gap:6px}.choices button{padding:6px 9px}}
+@page{size:A4;margin:13mm}
+@media print{body{background:#fff;font-size:11pt}.no-print,#welcome,#quiz{display:none!important} header,main{width:auto;margin:0} header{padding:8px 0} #report{border:0;padding:12px 0} h1{font-size:22pt}.profile,.summary,table{break-inside:avoid} .profiles{display:block}.profile{margin-bottom:8px;padding:8px} h2,h3{break-after:avoid}}
+.rating{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-block:20px}.rating button{padding:7px 3px;font-size:.83rem;line-height:1.35;min-height:52px}.rating b{display:block;font-size:1rem}.skip{font-size:.82rem}.question{font-size:clamp(1.4rem,4vw,2rem)} @media(max-width:420px){.rating{gap:4px}.rating button{font-size:.72rem}}
+.chart{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:18px 30px;margin:16px 0;break-inside:avoid}.chart canvas{display:block;width:180px;height:180px}.legend{list-style:none;margin:0;padding:0;min-width:220px}.legend li{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:5px 0}.legend bdi{font-weight:800}.swatch{display:inline-block;width:.8em;height:.8em;margin-inline-end:.5em;border-radius:50%}.profile strong{display:block;margin-block-start:.55em}.rating button{min-height:54px}
+button.is-confirmed[aria-pressed=true]{background:var(--blue);border-color:var(--blue);color:#fff}
+button.is-confirmed::after{content:" ✓";font-size:.8em;font-weight:700}
+</style>
+<body>
+<div class="stripe"></div>
+<header><span class="brand" dir="ltr">Scaling Up</span><span>أداة تدريبية تجريبية · DISC</span></header>
+<main>
+<section id="welcome">
+<h1>أساليب السلوك في العمل</h1>
+<p>قيّم ٣٢ عبارة بحسب ما تفعله عادةً في العمل خلال آخر ثلاثة أشهر.</p>
+<button class="primary" id="start">ابدأ</button>
+</section>
+<section id="quiz" hidden>
+<p class="muted" id="counter"></p>
+<progress id="progress" class="progress" aria-label="التقدم"></progress>
+<h1 class="question" id="statement" tabindex="-1"></h1>
+<div id="rating" class="rating" role="group" aria-label="اختر مدى تكرار السلوك"></div>
+<button id="skip" class="skip" type="button">لم تتح لي الفرصة</button>
+<div class="actions"><button id="back">السابق</button><button id="return-report" hidden>العودة للتقرير</button></div>
+</section>
+<section id="report" hidden>
+<h1 id="report-title" tabindex="-1">تقرير أساليب السلوك في العمل</h1>
+<div class="summary" id="summary"></div>
+<div id="chart-region">
+<h2>توزيع درجاتك على أنماط DISC</h2>
+<div class="chart"><canvas id="pie" width="360" height="360" aria-hidden="true"></canvas><ul class="legend" id="legend"></ul></div>
+<p><small>كل نسبة هي متوسط النمط مقسومًا على مجموع متوسطات الأنماط الأربعة. الدائرة تعرض توزيع درجاتك داخل هذا الاختبار.</small></p>
+</div>
+<table><thead><tr><th scope="col">الأسلوب</th><th scope="col">المتوسط من ٥</th><th scope="col">نسبة «غالبًا» فأكثر</th></tr></thead><tbody id="scores"></tbody></table>
+<p><small>النسبة هي حصة الإجابات «غالبًا» و«دائمًا تقريبًا» من الإجابات الصالحة لكل أسلوب. تُحسب درجة الأسلوب عند توفر ٦ إجابات على الأقل من أصل ٨.</small></p>
+<p>الأسلوب الأبرز ميل ظهر في إجاباتك، ومش قيد على طريقة تصرّفك. يمكنك استخدام الأساليب الأربعة بحسب الموقف.</p>
+<div class="profiles" id="profiles"></div>
+<p><small>نسخة تجريبية للتدريب والتأمل في أسلوب العمل.</small></p>
+<div class="actions no-print"><button id="print" class="primary">طباعة / حفظ PDF</button><button id="review">مراجعة الإجابات</button></div>
+</section>
+</main>
+<script>
+'use strict';
+const styles = {
+  D: ['الحسم والمبادرة','تميل هذه السلوكيات إلى تسريع القرار ودفع العمل إلى الأمام.','عندما يحتاج الفريق إلى اتجاه واضح، اقترح خطوة تالية وحدد متى تُراجع.','قبل الحسم، اسأل عمّن سيتأثر بالقرار وما المعلومات اللازمة له.'],
+  I: ['التواصل والتأثير','تعتمد هذه السلوكيات على تحريك الحوار وكسب تأييد الآخرين.','عندما تحتاج فكرة جديدة إلى دعم، اربطها بما يهم زملاءك وادعهم للمشاركة.','بعد النقاش، لخّص ما اتفق عليه الفريق ومن سيتولى الخطوة التالية.'],
+  S: ['الثبات والدعم','تساعد هذه السلوكيات على استمرارية التعاون ومساندة الزملاء أثناء العمل.','أثناء تغيير طريقة العمل، اسأل الزملاء عن الدعم الذي يحتاجونه للمتابعة.','عندما يصبح الانتظار مكلفًا، اتفق على وقت محدد للخطوة التالية.'],
+  C: ['الدقة والالتزام بالمعايير','تركّز هذه السلوكيات على التحقق من المعلومات والاتفاق على معايير العمل.','قبل التسليم، راجع النقاط التي قد تؤثر في قبول العمل أو استخدامه.','حدّد ما يستحق مراجعة إضافية بحسب أثر الخطأ والوقت المتاح.'],
+};
+const items = `D|عندما يتأخر قرار يحتاجه العمل، أبادر إلى حسم ما يقع ضمن صلاحيتي.
+I|أبدأ الحديث مع زميل أقابله لأول مرة.
+C|أراجع الأرقام الواردة في العمل قبل تسليمه.
+S|أخصص وقتًا لمساندة زميل يتعلّم مهمة جديدة.
+I|أُظهر حماسي عندما أشارك الفريق فكرة جديدة.
+S|أحافظ على إيقاع عمل ثابت في المهام التي تمتد عدة أيام.
+D|عندما يتعطل العمل، أقترح خطوة مباشرة لاستئنافه.
+C|أرجع إلى الإجراء المعتمد عندما لا تكون طريقة التنفيذ واضحة.
+S|أتيح لزميلي وقتًا لشرح موقفه عندما نختلف.
+C|أسأل عن معايير قبول العمل قبل البدء في مهمة جديدة.
+I|أستخدم أمثلة قريبة من اهتمامات زملائي لكسب تأييدهم لفكرة.
+D|أصرّح برأيي عندما أختلف مع التوجه السائد في الاجتماع.
+C|أتحقق من مصدر المعلومة قبل الاعتماد عليها.
+D|عندما تتعدد المطالب، أحدد ما يجب إنجازه أولًا.
+S|أساعد زملائي على تطبيق طريقة عمل جديدة خطوة بخطوة.
+I|أبادر بالتعارف مع زملاء من فرق أخرى في لقاءات العمل.
+D|عندما تضيق المهلة، أختار مسارًا للعمل وفق المعلومات المتاحة.
+S|أعيد شرح المهمة لزميلي إذا احتاج إلى توضيح إضافي.
+I|عندما يقل تفاعل المجموعة، أبادر إلى تنشيط الحوار.
+C|أقارن العمل المكتمل بالمتطلبات قبل إرساله.
+I|أشرك الآخرين في الحديث عندما أشاركهم فكرة جديدة.
+C|عندما تختلف نسختان من مستند، أتحقق من النسخة المعتمدة.
+D|عندما يطول النقاش، أطلب من المجموعة اتخاذ قرار واضح.
+S|أتابع مع زميل ساندته لأعرف إن كان يحتاج إلى مساعدة إضافية.
+C|أراجع ترتيب الخطوات عندما تتطلب المهمة اتباع تسلسل محدد.
+S|أحافظ على مواعيد المتابعة المعتادة في الأعمال المشتركة.
+I|أعبّر عن تقديري لمساهمة زميل أمام المجموعة.
+D|أطرح المشكلة مباشرةً مع الشخص المعني عندما تعطّل العمل.
+S|عندما يتغير توزيع العمل، أساند زملائي في استكمال مهامهم.
+D|أبادر إلى قيادة مهمة مشتركة حين تكون المسؤولية غير محددة.
+C|أوثّق التعديلات عندما يحتاج شخص آخر إلى متابعة العمل بعدي.
+I|أتحدث مع زملائي مباشرةً لكسب دعمهم لفكرة.`.split(/\r?\n/).map(line => line.split('|'));
+const labels = ['أبدًا','نادرًا','أحيانًا','غالبًا','دائمًا تقريبًا'];
+const profileNotes = {
+  D: ['يحسم الأولويات، ويبادر عند التعطّل، ويوضح الخطوة المطلوبة.','قد يحسم قبل سماع الآراء أو يختصر شرح القرار تحت الضغط.','قبل القرار، اسأل عن نقطة مهمة ربما لم تُطرح.'],
+  I: ['ينشّط الحوار، ويشرك الزملاء، ويساعد في كسب التأييد للأفكار.','قد يتوسع في الأفكار أو ينتقل إلى موضوع جديد قبل تثبيت ما اتُّفق عليه.','اختم النقاش بخطوة محددة ومسؤول وموعد متابعة.'],
+  S: ['يصغي، ويساند الزملاء، ويحافظ على استمرارية التعاون عند التغيير.','قد يؤجل طرح اختلاف مهم أو يتحمل مهام إضافية على حساب أولوياته.','عبّر عن تحفظك مبكرًا وحدد نوع الدعم الذي تستطيع تقديمه.'],
+  C: ['يتحقق من المعلومات، ويلاحظ الفجوات، ويساعد الفريق على ضبط الجودة.','قد يطيل المراجعة أو يتأخر في الحسم عندما تكون المعلومات ناقصة.','اتفق مسبقًا على الحد الكافي من المراجعة والوقت المتاح لها.'],
+};
+const chartColors = ['#104862','#f6a822','#94c120','#177cbd'];
+const answers = Array(items.length).fill(undefined);
+const el = id => document.getElementById(id);
+const num = new Intl.NumberFormat('ar-EG',{maximumFractionDigits:2});
+const ratio = new Intl.NumberFormat('ar-EG',{style:'percent',maximumFractionDigits:1});
+let page = 0;
+let reportShown = false;
+let advancing = false;
+
+function view(id) {
+  for (const name of ['welcome','quiz','report']) el(name).hidden = name !== id;
+  window.scrollTo(0,0);
+}
+
+function updateRating() {
+  for (const button of el('rating').children) {
+    button.setAttribute('aria-pressed', String(answers[page] === Number(button.value)));
+  }
+  el('skip').setAttribute('aria-pressed', String(answers[page] === null));
+}
+
+function showQuestion() {
+  view('quiz');
+  el('statement').textContent = items[page][1];
+  el('counter').textContent = num.format(page+1) + ' من ' + num.format(items.length);
+  el('progress').max = items.length;
+  el('progress').value = page + 1;
+  el('back').textContent = page === 0 ? 'التعليمات' : 'السابق';
+  el('return-report').hidden = !reportShown;
+  updateRating();
+  el('statement').focus();
+}
+
+function sharesOf(results) {
+  if (results.some(item => item.mean === null)) return null;
+  const total = results.reduce((sum,item) => sum + item.mean,0);
+  return results.map(item => ({...item,share:item.mean / total}));
+}
+
+function drawChart(results) {
+  const shares = sharesOf(results);
+  el('chart-region').hidden = !shares;
+  if (!shares) return;
+  el('legend').replaceChildren();
+  const ctx = el('pie').getContext('2d');
+  ctx.clearRect(0,0,360,360);
+  let start = -Math.PI / 2;
+  for (const [index,item] of shares.entries()) {
+    const end = index === shares.length - 1 ? 1.5 * Math.PI : start + item.share * 2 * Math.PI;
+    ctx.beginPath();
+    ctx.moveTo(180,180);
+    ctx.arc(180,180,174,start,end);
+    ctx.closePath();
+    ctx.fillStyle = chartColors[index];
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    const midpoint = (start + end) / 2;
+    ctx.fillStyle = index === 1 || index === 2 ? '#17303a' : '#ffffff';
+    ctx.font = 'bold 29px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const x = 180 + 124 * Math.cos(midpoint);
+    const y = 180 + 124 * Math.sin(midpoint);
+    ctx.fillText(item.key,x,y - 9);
+    ctx.font = 'bold 19px Arial';
+    ctx.fillText(ratio.format(item.share),x,y + 15,49);
+    start = end;
+    const row = document.createElement('li');
+    const label = document.createElement('span');
+    const swatch = document.createElement('span');
+    swatch.className = 'swatch';
+    swatch.style.backgroundColor = chartColors[index];
+    swatch.setAttribute('aria-hidden','true');
+    label.append(swatch,item.key + ' · ' + styles[item.key][0]);
+    const value = document.createElement('bdi');
+    value.textContent = ratio.format(item.share);
+    row.append(label,value);
+    el('legend').append(row);
+  }
+}
+
+function score(responses) {
+  return Object.keys(styles).map(key => {
+    const values = responses.filter((value,index) => items[index][0] === key && Number.isInteger(value));
+    if (values.length < 6) return {key,mean:null,frequent:null};
+    const total = values.reduce((sum,value) => sum + value,0);
+    return {key,mean:total / values.length,frequent:values.filter(value => value >= 4).length / values.length};
+  });
+}
+
+function showReport() {
+  if (advancing) return;
+  const results = score(answers);
+  const highest = Math.max(...results.map(item => item.mean ?? -Infinity));
+  const leaders = results.filter(item => item.mean === highest);
+  const names = leaders.map(item => styles[item.key][0]).join('، ');
+  view('report');
+  reportShown = true;
+  drawChart(results);
+  const complete = results.every(item => item.mean !== null);
+  el('summary').textContent = !complete ? 'الإجابات غير كافية لتحديد الأسلوب الأبرز عبر الأبعاد الأربعة.'
+    : leaders.length > 1 ? 'تعادل في أعلى متوسط: ' + names
+    : 'الأسلوب الأبرز في إجاباتك: ' + names;
+  el('scores').replaceChildren();
+  el('profiles').replaceChildren();
+  for (const result of results) {
+    const [name] = styles[result.key];
+    const row = el('scores').insertRow();
+    const title = document.createElement('th');
+    title.scope = 'row';
+    title.textContent = name + ' · ' + result.key;
+    row.append(title);
+    row.insertCell().textContent = result.mean === null ? 'بيانات غير كافية' : num.format(result.mean);
+    row.insertCell().textContent = result.frequent === null ? '—' : ratio.format(result.frequent);
+    const card = document.createElement('article');
+    card.className = 'profile';
+    const heading = document.createElement('h3');
+    heading.textContent = result.key + ' · ' + name;
+    card.append(heading);
+    for (const [index,text] of profileNotes[result.key].entries()) {
+      const paragraph = document.createElement('p');
+      const label = document.createElement('strong');
+      label.textContent = ['المميزات','التحديات المحتملة','خطوة عملية'][index];
+      paragraph.append(label,text);
+      card.append(paragraph);
+    }
+    el('profiles').append(card);
+  }
+  el('report-title').focus();
+}
+
+function answerAndAdvance(value) {
+  if (advancing) return;
+  advancing = true;
+  answers[page] = value;
+  updateRating();
+  const selected = value === null ? el('skip') : el('rating').children[value - 1];
+  selected.classList.add('is-confirmed');
+  window.setTimeout(() => {
+    selected.classList.remove('is-confirmed');
+    advancing = false;
+    if (page === items.length - 1) showReport();
+    else { page++; showQuestion(); }
+  }, 300);
+}
+
+labels.forEach((label,index) => {
+  const button = document.createElement('button');
+  button.value = index + 1;
+  button.textContent = label;
+  button.onclick = () => answerAndAdvance(index + 1);
+  el('rating').append(button);
+});
+el('skip').onclick = () => answerAndAdvance(null);
+el('start').onclick = () => { page = 0; showQuestion(); };
+el('return-report').onclick = showReport;
+el('back').onclick = () => {
+  if (advancing) return;
+  if (page > 0) { page--; showQuestion(); }
+  else { view('welcome'); el('start').focus(); }
+};
+el('review').onclick = () => { page = 0; showQuestion(); };
+el('print').onclick = () => window.print();
+</script>
+</body>
+</html>
